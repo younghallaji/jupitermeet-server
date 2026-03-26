@@ -15,7 +15,11 @@ const fetchSettings = require('./setting');
 
     const io = require('socket.io')(server, {
         cors: {
-            origin: process.env.DOMAIN //allow only the specified domain to connect
+            origin: [
+                process.env.DOMAIN,
+                process.env.DOMAIN.replace('https://', 'http://'),
+                process.env.DOMAIN.replace('http://', 'https://')
+            ]
         }
     });
     const listner = server.listen(setting.port, function () {
