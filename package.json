@@ -4,7 +4,8 @@
     "version": "2.1.7",
     "scripts": {
         "local": "node local.js",
-        "live": "pm2 start app.js --name 'JupiterMeetPro'"
+        "live": "node app.js", 
+        "dev": "pm2 start app.js --name 'JupiterMeetPro'"
     },
     "dependencies": {
         "dotenv": "^16.5.0",
