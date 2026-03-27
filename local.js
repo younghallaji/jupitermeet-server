@@ -29,6 +29,8 @@ const fetchSettings = require('./setting');
     require('./socket')(io, setting);
     require('./forceMute')(io);
     require('./videoSync')(io);
+    require('./reactions')(io);
+    require('./raiseHand')(io);
 
     app.get('/', function (req, res) {
         res.send('Ok');
