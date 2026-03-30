@@ -1,0 +1,65 @@
+name: Deploy Signaling Server to DigitalOcean
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to DigitalOcean
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+
+            APP_DIR="/var/www/zumimeet-server"
+
+            cd $APP_DIR
+
+            # Backup .env so git pull doesn't overwrite it
+            cp .env .env.backup 2>/dev/null || true
+
+            # Pull latest code
+            git pull origin main
+
+            # Restore .env
+            cp .env.backup .env 2>/dev/null || true
+
+            # Only install if package.json changed
+            if git diff HEAD@{1} HEAD --name-only 2>/dev/null | grep -q "package.json"; then
+              echo "package.json changed, running npm install..."
+              npm install --omit=dev
+            else
+              echo "package.json unchanged, skipping npm install"
+            fi
+
+            # Restart or start with PM2
+            if pm2 list | grep -q "zumimeet-signal"; then
+              pm2 restart zumimeet-signal
+            else
+              pm2 start app.js --name "zumimeet-signal"
+            fi
+
+            pm2 save
+
+            echo "Deployment complete"
+
+      - name: Notify success
+        if: success()
+        run: echo "Server deployed successfully to DigitalOcean"
+
+      - name: Notify failure
+        if: failure()
+        run: echo "Deployment failed — check the logs above"
